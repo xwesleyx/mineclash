@@ -170,10 +170,11 @@ const App: React.FC = () => {
           setGameState(GameState.SETUP_ROOM);
         });
 
-        peer.on('error', () => { 
+        peer.on('error', (err: any) => { 
+            console.error("PeerJS Error:", err);
             resetPeer(); 
             setGameState(GameState.ROLE_SELECT); 
-            alert("Erro de conexão com o servidor PeerJS. Tente novamente.");
+            alert("Erro de conexão. Tente novamente.");
         });
 
         peer.on('connection', (conn: any) => {
@@ -239,10 +240,11 @@ const App: React.FC = () => {
             }
           });
 
-          conn.on('error', () => { 
+          conn.on('error', (err: any) => { 
+              console.error("Join Error:", err);
               resetPeer(); 
               setGameState(GameState.ROLE_SELECT); 
-              alert("Sala não encontrada ou erro de rede.");
+              alert("Sala não encontrada.");
           });
         });
     } catch (e) {
@@ -278,9 +280,10 @@ const App: React.FC = () => {
 
   const handlePlayerChoice = (choice: string) => {
     if (!currentUser || !choice.trim()) return;
-    const updatedPlayers = players.map(p => p.id === currentUser.id ? { ...p, currentChoice: choice.trim().toUpperCase(), isReady: true } : p);
+    const sanitizedChoice = choice.trim().toUpperCase();
+    const updatedPlayers = players.map(p => p.id === currentUser.id ? { ...p, currentChoice: sanitizedChoice, isReady: true } : p);
     setPlayers(updatedPlayers);
-    if (!currentUser.isHost) hostConnRef.current?.send({ type: 'CHOICE', playerId: currentUser.id, choice: choice.trim().toUpperCase() });
+    if (!currentUser.isHost) hostConnRef.current?.send({ type: 'CHOICE', playerId: currentUser.id, choice: sanitizedChoice });
     else broadcastState({ players: updatedPlayers });
   };
 
@@ -330,7 +333,8 @@ const App: React.FC = () => {
     ].includes(mode);
   };
 
-  const isWritingMode = aiData?.mode === 'Tema da Sorte' || (aiData && aiData.items.length === 0);
+  // Se o modo for 'Tema da Sorte' OU a lista de itens estiver vazia, habilita o modo de escrita
+  const isWritingMode = aiData?.mode === 'Tema da Sorte' || (aiData && aiData.items.length === 0 && aiData.mode !== 'Luck Block');
 
   return (
     <div className="h-screen w-screen overflow-hidden flex flex-col items-center justify-center p-4 relative bg-[#f2b134]">
@@ -418,7 +422,7 @@ const App: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex-1 w-full max-w-md bg-black/5 border-4 border-dashed border-[#3e2723]/20 p-6 overflow-y-auto space-y-3 shadow-inner">
+                <div className="flex-1 w-full max-md bg-black/5 border-4 border-dashed border-[#3e2723]/20 p-6 overflow-y-auto space-y-3 shadow-inner">
                     <h4 className="text-xl font-black uppercase opacity-50 tracking-widest mb-2">JOGADORES NA SALA:</h4>
                     {players.map(p => (
                         <div key={p.id} className="bg-white p-4 border-4 border-[#3e2723] flex justify-between items-center shadow-xl animate-pop">
@@ -511,6 +515,7 @@ const App: React.FC = () => {
                                             className="minecraft-input w-full text-4xl text-center uppercase" 
                                             placeholder="..." 
                                             maxLength={20}
+                                            autoFocus
                                         />
                                         <button 
                                             onClick={() => handlePlayerChoice(customChoice)} 

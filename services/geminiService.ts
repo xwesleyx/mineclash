@@ -31,7 +31,7 @@ const parseLuckDatabase = (): Omit<PlayerEffect, 'id'>[] => {
 export const generateAIRound = async (usedItems: string[], luckBlockAppeared: boolean, players: Player[]): Promise<AIRoundData> => {
     try {
         const ai = getAI();
-        const luckChance = luckBlockAppeared ? 0.05 : 0.12;
+        const luckChance = luckBlockAppeared ? 0.05 : 0.15;
         const isLuckRound = Math.random() < luckChance;
 
         if (isLuckRound) {
@@ -61,51 +61,56 @@ export const generateAIRound = async (usedItems: string[], luckBlockAppeared: bo
           'Ferramenta Amaldiçoada', 'Toque do Oráculo'
         ];
         const selectedMode = modes[Math.floor(Math.random() * modes.length)];
-
-        // Se for Tema da Sorte, pedimos um tema criativo mas sem itens, pois o player vai escrever.
-        const isCreativeMode = selectedMode === 'Tema da Sorte';
+        const isWritingMode = selectedMode === 'Tema da Sorte';
 
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
-            contents: `Gere uma rodada para o jogo "Minecraft Clash" no modo "${selectedMode}".
-            Itens já usados: ${usedItems.join(', ')}.
-            
-            REGRAS PARA O MODO:
-            ${isCreativeMode ? '- O tema deve ser uma categoria aberta (ex: "Algo de madeira", "Um mob hostil").\n- Retorne a lista "items" VAZIA: [].' : '- O tema deve ser curto.\n- Retorne exatamente 4 itens específicos do Minecraft na lista "items".'}
-            
-            FORMATO JSON OBRIGATÓRIO:
+            contents: `Você é o Oráculo do jogo Minecraft Clash. Gere uma rodada desafiadora.
+            Modo Selecionado: ${selectedMode}.
+            Itens Proibidos (já usados): ${usedItems.join(', ')}.
+
+            REGRAS ESTRITAS:
+            1. Se o modo for "Tema da Sorte", a lista de "items" deve ser OBRIGATORIAMENTE vazia []. O tema deve ser uma categoria (ex: "Algo feito de madeira").
+            2. Para outros modos, a lista "items" deve conter exatamente 4 nomes de itens do Minecraft.
+            3. A "description" deve ser uma instrução curta (max 12 palavras) sobre o que os jogadores devem fazer.
+            4. Retorne APENAS o JSON, sem explicações ou markdown.
+
+            FORMATO:
             {
-              "theme": "string",
-              "description": "string (instrução curta de como jogar essa rodada)",
-              "items": ["string"],
-              "difficulty": "fácil" | "médio" | "difícil"
+              "theme": "Nome do Tema",
+              "description": "Instrução curta",
+              "items": ["Item1", "Item2", "Item3", "Item4"],
+              "difficulty": "médio"
             }`,
             config: {
                 responseMimeType: 'application/json',
             }
         });
 
-        let rawText = response.text || "{}";
-        // Limpeza de segurança caso o modelo ignore o responseMimeType e mande markdown
-        rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+        let text = response.text || "";
+        // Remove blocos de código markdown se o modelo os incluir por engano
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
         
-        const result = JSON.parse(rawText);
+        const result = JSON.parse(text);
         
+        // Forçar items vazios se for Tema da Sorte para garantir que o input de texto apareça
+        const finalItems = isWritingMode ? [] : (result.items || []);
+
         return {
             ...result,
             mode: selectedMode,
-            itemIds: (result.items || []).map(() => Math.random().toString(36).substr(2, 9))
+            items: finalItems,
+            itemIds: finalItems.map(() => Math.random().toString(36).substr(2, 9))
         };
     } catch (error) {
-        console.error("AI Error:", error);
-        // Fallback robusto
+        console.error("AI Generation failed, using fallback:", error);
         return {
             mode: 'Mob Misterioso',
-            theme: 'Invasão de Creepers',
-            description: 'A IA falhou, mas os Creepers não! Escolha um item de defesa.',
-            items: ['Escudo', 'Espada de Ferro', 'Balde de Água', 'Arco'],
-            itemIds: ['e1', 'e2', 'e3', 'e4'],
-            difficulty: 'médio'
+            theme: 'Falha na Matrix do Nether',
+            description: 'O Oráculo se perdeu no Vazio! Escolha um item de sobrevivência clássico.',
+            items: ['Picareta de Diamante', 'Espada de Ferro', 'Pão', 'Tocha'],
+            itemIds: ['f1', 'f2', 'f3', 'f4'],
+            difficulty: 'fácil'
         };
     }
 };
