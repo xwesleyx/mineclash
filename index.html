@@ -1,0 +1,160 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Minecraft Clash</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'VT323', monospace;
+        background-color: #f2b134; 
+        color: #3e2723;
+        margin: 0;
+        overflow: hidden;
+        height: 100vh;
+        width: 100vw;
+        font-size: 20px;
+      }
+
+      .bg-animation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        background: #f2b134;
+        overflow: hidden;
+      }
+
+      .block-cloud {
+        position: absolute;
+        display: flex;
+        flex-wrap: wrap;
+        width: 200px;
+        animation: moveCloud linear infinite;
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      .cloud-pixel {
+        background-color: white;
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(0,0,0,0.05);
+        box-shadow: inset -8px -8px 0px rgba(0,0,0,0.1);
+      }
+
+      @keyframes moveCloud {
+        from { left: -300px; }
+        to { left: 110vw; }
+      }
+
+      .minecraft-border {
+        border: 6px solid #3e2723;
+        box-shadow: inset -8px -8px 0px #b08d0a, inset 8px 8px 0px #fceb83;
+        background-color: #fff9c4;
+      }
+
+      .minecraft-button {
+        background-color: #f2b134;
+        border: 6px solid #3e2723;
+        box-shadow: inset -6px -6px 0px #b08d0a, inset 6px 6px 0px #fceb83;
+        image-rendering: pixelated;
+        color: #3e2723;
+        font-weight: bold;
+        transition: all 0.1s;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .minecraft-button:hover:not(:disabled) {
+        background-color: #fceb83;
+        transform: scale(1.02);
+      }
+
+      .minecraft-button:active:not(:disabled) {
+        box-shadow: inset 6px 6px 0px #b08d0a, inset -6px -6px 0px #fceb83;
+        transform: scale(0.98);
+      }
+
+      .minecraft-input {
+        background-color: #fff;
+        border: 6px solid #3e2723;
+        padding: 16px;
+        color: #3e2723;
+        outline: none;
+        box-shadow: inset 6px 6px 0px rgba(0,0,0,0.1);
+        font-family: 'VT323', monospace;
+      }
+
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-15px); }
+      }
+
+      .animate-float {
+        animation: float 4s ease-in-out infinite;
+      }
+
+      @keyframes heart-beat {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.3); }
+      }
+      .animate-heart-beat {
+        animation: heart-beat 0.6s ease-in-out infinite;
+      }
+
+      .player-name-shadow {
+        text-shadow: 4px 4px 0px rgba(0,0,0,0.3);
+      }
+      
+      ::-webkit-scrollbar { display: none; }
+    </style>
+    <script type="importmap">
+    {
+      "imports": {
+        "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+        "react": "https://esm.sh/react@^19.2.3",
+        "react/": "https://esm.sh/react@^19.2.3/",
+        "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
+      }
+    }
+    </script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div class="bg-animation" id="bg-clouds"></div>
+    <div id="root"></div>
+    <script>
+      window.process = window.process || { env: { API_KEY: "" } };
+    </script>
+    <script type="module" src="./index.tsx"></script>
+    <script>
+      const bg = document.getElementById('bg-clouds');
+      for (let i = 0; i < 10; i++) {
+        const cloud = document.createElement('div');
+        cloud.className = 'block-cloud';
+        const blocks = 4;
+        for(let j=0; j<blocks; j++) {
+            const p = document.createElement('div');
+            p.className = 'cloud-pixel';
+            cloud.appendChild(p);
+        }
+        cloud.style.top = (Math.random() * 80) + '%';
+        cloud.style.animationDuration = (Math.random() * 20 + 30) + 's';
+        cloud.style.animationDelay = -(Math.random() * 60) + 's';
+        bg.appendChild(cloud);
+      }
+    </script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
